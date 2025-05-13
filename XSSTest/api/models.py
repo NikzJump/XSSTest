@@ -36,7 +36,7 @@ class Comment(models.Model):
 
 class User(AbstractBaseUser, PermissionsMixin):
     fio = models.CharField(max_length=99)
-    comments = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, default=None)
+    comments = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True)
     balance = models.IntegerField(default=0)
 
     email = models.EmailField(unique=True)

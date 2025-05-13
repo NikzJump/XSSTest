@@ -15,7 +15,7 @@ def signup(request):
         serialize_data.save()
 
         return Response({"data": {"message": "successful registration", "code": 201}})
-    return Response({"error": {"message": serialize_data.errors}})
+    return Response({"error": {"message": serialize_data.errors, "code": 403}})
 
 
 @api_view(["POST"])
@@ -37,15 +37,23 @@ def login(request):
 
 
 @api_view(["POST"])
-def post_comment(request):
-    serialize_data = CommentSerializer(data=request.data)
-    serialize_data.save()
+def post_comment(request, pk):
+    if not request.user.is_active:
+        return Response({"error": "forbidden for you", "code": "403"})
+
     try:
-        recipient = User.objects.get(pk=request.data.get("recipient_id"))
+        recipient = User.objects.get(pk=pk)
     except:
         return Response({"error": "user not found", "code": 404})
 
+    serialize_data = CommentSerializer(data=request.data)
 
+    if serialize_data.is_valid():
+        comment = serialize_data.save()
+        print("!!!!!", recipient)
+
+        return Response({"data": {"message": "comment has been added", "code": 201}})
+    return Response({"error": serialize_data.errors, "code": 403})
 
 
 @api_view(["PATCH"])
@@ -71,3 +79,31 @@ def transfer_coins(request):
     recipient.save()
 
     return Response({"data": "successful transfer", "code": 200})
+
+
+@api_view(["GET"])
+def get_user_data(request, pk):
+    user = User.objects.get(pk=pk)
+    serialize_data = UserSerializer(user)
+    data = {
+        "email": serialize_data.data["email"],
+        "fio": serialize_data.data["fio"],
+        "balance": serialize_data.data["balance"]
+    }
+
+    if request.user != user:
+        return Response({"error": "forbidden for you", "code": 403})
+
+    return Response({"data": data, "code": 200})
+
+
+@api_view(["GET"])
+def get_user_names(request):
+    names = User.objects.all()
+    serialize_data = UserSerializer(names, many=True)
+    data = []
+
+    for i in serialize_data.data:
+        data.append(i["fio"])
+
+    return Response({"data": data, "code": 200})

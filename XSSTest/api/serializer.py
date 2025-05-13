@@ -22,3 +22,12 @@ class CommentSerializer(ModelSerializer):
     class Meta:
         model = Comment
         fields = "__all__"
+
+    def create(self, validated_data):
+        comment = Comment.objects.create(
+            title=validated_data["title"],
+            user_name=validated_data["user_name"]
+        )
+        comment.save()
+
+        return comment
